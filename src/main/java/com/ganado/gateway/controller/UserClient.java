@@ -1,6 +1,9 @@
 package com.ganado.gateway.controller;
 
 
+import com.ganado.gateway.dto.ConfirmCodeDTO;
+import com.ganado.gateway.dto.PasswordDTO;
+import com.ganado.gateway.dto.ResetPasswordDTO;
 import com.ganado.gateway.dto.user.*;
 import com.ganado.gateway.model.Usuario;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,6 +12,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -91,5 +95,31 @@ public class UserClient {
                 .retrieve()
                 .bodyToMono(CheckEmailResponse.class)
                 .map(CheckEmailResponse::isExists);
+    }
+
+    public Mono<Map> resetPassword(ResetPasswordDTO dto) {
+        return webClient.post()
+                .uri("/api/users/reset-password")
+                .bodyValue(dto)
+                .retrieve()
+                .bodyToMono(Map.class);
+    }
+
+    // ✔ CONFIRMAR CÓDIGO
+    public Mono<Map> confirmResetCode(ConfirmCodeDTO dto) {
+        return webClient.post()
+                .uri("/api/users/reset-password/confirm")
+                .bodyValue(dto)
+                .retrieve()
+                .bodyToMono(Map.class);
+    }
+
+    // ✔ NUEVA CONTRASEÑA
+    public Mono<Map> setNewPassword(PasswordDTO dto) {
+        return webClient.post()
+                .uri("/api/users/reset-password/new")
+                .bodyValue(dto)
+                .retrieve()
+                .bodyToMono(Map.class);
     }
 }

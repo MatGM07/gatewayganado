@@ -1,6 +1,9 @@
 package com.ganado.gateway.controller;
 
+import com.ganado.gateway.dto.ConfirmCodeDTO;
 import com.ganado.gateway.dto.ErrorResponse;
+import com.ganado.gateway.dto.PasswordDTO;
+import com.ganado.gateway.dto.ResetPasswordDTO;
 import com.ganado.gateway.dto.user.LoginDTO;
 import com.ganado.gateway.dto.user.LoginResponse;
 import com.ganado.gateway.dto.user.TokenResponse;
@@ -79,5 +82,59 @@ public class AuthController {
             return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ErrorResponse("Invalid token")));
         }
+    }
+
+    @PostMapping("/reset-password")
+    public Mono<ResponseEntity<Object>> resetPassword(@RequestBody ResetPasswordDTO dto) {
+
+        return userClient.resetPassword(dto)
+                .map(response -> ResponseEntity.ok((Object) response))
+                .onErrorResume(WebClientResponseException.NotFound.class, e ->
+                        Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body((Object) new ErrorResponse("Email not found"))))
+                .onErrorResume(WebClientResponseException.class, e ->
+                        Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body((Object) new ErrorResponse("Service unavailable: " + e.getMessage()))))
+                .onErrorResume(Exception.class, e ->
+                        Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body((Object) new ErrorResponse("Unexpected error"))));
+    }
+
+    @PostMapping("/reset-password/confirm")
+    public Mono<ResponseEntity<Object>> confirmResetCode(@RequestBody ConfirmCodeDTO dto) {
+
+        return userClient.confirmResetCode(dto)
+                .map(response -> ResponseEntity.ok((Object) response))
+                .onErrorResume(WebClientResponseException.BadRequest.class, e ->
+                        Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                .body((Object) new ErrorResponse("Invalid or expired code"))))
+                .onErrorResume(WebClientResponseException.NotFound.class, e ->
+                        Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body((Object) new ErrorResponse("Email not found"))))
+                .onErrorResume(WebClientResponseException.class, e ->
+                        Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body((Object) new ErrorResponse("Service unavailable: " + e.getMessage()))))
+                .onErrorResume(Exception.class, e ->
+                        Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body((Object) new ErrorResponse("Unexpected error"))));
+    }
+
+    @PostMapping("/reset-password/new")
+    public Mono<ResponseEntity<Object>> setNewPassword(@RequestBody PasswordDTO dto) {
+
+        return userClient.setNewPassword(dto)
+                .map(response -> ResponseEntity.ok((Object) response))
+                .onErrorResume(WebClientResponseException.BadRequest.class, e ->
+                        Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                .body((Object) new ErrorResponse("Password requirements not met"))))
+                .onErrorResume(WebClientResponseException.NotFound.class, e ->
+                        Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body((Object) new ErrorResponse("Email not found"))))
+                .onErrorResume(WebClientResponseException.class, e ->
+                        Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body((Object) new ErrorResponse("Service unavailable: " + e.getMessage()))))
+                .onErrorResume(Exception.class, e ->
+                        Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body((Object) new ErrorResponse("Unexpected error"))));
     }
 }
